@@ -1,17 +1,18 @@
 import random as _rand
 from .distributions import categorical, dirichlet
 from itertools import accumulate
+from collections import defaultdict, Counter
 
 
 def sample_partition(dependency_tensor, null_distribution,
-                     steps=100,
+                     updates=100,
                      initial_partition=None,
                      state_nodes=None,
                      ):
     if state_nodes is None:
         state_nodes = get_state_nodes(dependency_tensor)
     state_nodes = [tuple(n) for n in state_nodes]
-    node_buckets = OrderedAspectBuckets(dependency_tensor, state_nodes)
+    buckets = OrderedAspectBuckets(dependency_tensor, state_nodes)
     if initial_partition is None:
         # partition = _np.zeros(dependency_tensor.shape)
         partition = dict()
@@ -20,9 +21,10 @@ def sample_partition(dependency_tensor, null_distribution,
     else:
         partition = initial_partition
 
-    for nodes in node_buckets:
-        for it in range(steps):
-            _rand.shuffle(nodes)
+    for layers in buckets:
+        layers = list(layers.values())
+        for it in range(updates*len(layers)):
+            nodes = _rand.choice(layers)
             for node in nodes:
                 update_node = dependency_tensor.getrandneighbour(node)
                 if update_node == node:
@@ -102,9 +104,9 @@ class OrderedAspectBuckets:
         self.shape = [1]
         for i in self.index:
             self.shape.append(self.shape[-1]*dependency_tensor.shape[i])
-        self.buckets = [[] for _ in range(self.shape[-1])]
+        self.buckets = [defaultdict(list) for _ in range(self.shape[-1])]
         for node in state_nodes:
-            self.buckets[self.map(node)].append(node)
+            self.buckets[self.map(node)][tuple(node[1:])].append(node)
 
     def map(self, node):
         m = 0
