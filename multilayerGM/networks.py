@@ -17,7 +17,7 @@ class MultiNet:
         if self.aspects is not None:
             self.aspects = list(self.aspects)
         self._neighbors = _dfdict(set)
-        if not neighbors is None:
+        if neighbors is not None:
             self.add_from_neighbors_dict(neighbors)
 
     def add_from_neighbors_dict(self, neighbors_dict):
