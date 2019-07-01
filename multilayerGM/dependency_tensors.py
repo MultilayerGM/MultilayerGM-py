@@ -1,26 +1,64 @@
 import random as _rand
-from itertools import accumulate
+from itertools import accumulate, chain
 from .distributions import categorical
+from collections import defaultdict
 
 from abc import ABC, abstractmethod
 
 
 class DependencyTensor(ABC):
-    def __init__(self, shape, aspect_types):
+    def __init__(self, shape, aspect_types, state_nodes=None):
         self.shape = shape
         self.aspect_types = aspect_types
+        if state_nodes is None:
+            self._state_nodes = {l: [(n, *l) for n in range(shape[0])] for l in SubscriptIterator(self.shape[1:])}
+        else:
+            self._state_nodes = {l: [] for l in SubscriptIterator(self.shape[1:])}
+            for n in state_nodes:
+                if all(mi > ni >= 0 for mi, ni in zip(self.shape, n)):
+                    n_t = tuple(n)
+                    self._state_nodes[n[1:]].append(n)
+                else:
+                    raise ValueError("Provided state nodes do not match `shape`")
+
+    def state_nodes(self, layer=None):
+        if layer is None:
+            return chain.from_iterable(self._state_nodes.values())
+        else:
+            return self._state_nodes[layer]
+
+    def ordered_aspect_layers(self):
+        shape = list(self.shape[1:])
+        for i in range(len(shape)):
+            if self.aspect_types[i] == 'r':
+                shape[i] = 1
+        return SubscriptIterator(shape)
+
+    def random_aspect_layers(self):
+        shape = list(self.shape[1:])
+        for i in range(len(shape)):
+            if self.aspect_types[i] == 'o':
+                shape[i] = 1
+        return SubscriptIterator(shape)
+
+    def number_of_layers(self, aspect_type=None):
+        if aspect_type is None:
+            def check(t):
+                return True
+        else:
+            def check(t):
+                return t == aspect_type
+
+        n = 1
+        for s, t in zip(self.shape[1:], self.aspect_types):
+            if check(t):
+                n *= s
+        return n
 
     @abstractmethod
     def getrandneighbour(self, node):
-        rnode = (_rand.randint(i) for i in self.shape)
+        rnode = tuple(_rand.randint(i) for i in self.shape)
         return rnode
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        if cls is DependencyTensor:
-            if any("getrandneighbour" in B.__dict__ for B in C.__mro__):
-                return True
-        return NotImplemented
 
 
 class UniformMultiplex(DependencyTensor):
@@ -82,3 +120,50 @@ class MultiAspect(DependencyTensor):
         node[i+1] = a_i
         return tuple(node)
 
+
+class SubscriptIterator:
+    def __init__(self, shape):
+        self.shape = shape
+        self.state = [0 for _ in self.shape]
+        if self.state:
+            self.state[-1] = -1
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self._update_state(len(self.shape)-1)
+        return tuple(self.state)
+
+    def _update_state(self, index):
+        if index < 0:
+            raise StopIteration
+        else:
+            if self.state[index] < self.shape[index] - 1:
+                self.state[index] += 1
+            else:
+                self.state[index] = 0
+                self._update_state(index - 1)
+
+
+class OrderedAspectBuckets:
+    """
+    divide state nodes into buckets based on ordered aspects
+    """
+    def __init__(self, dependency_tensor):
+        self.index = [i+1 for i, t in enumerate(dependency_tensor.aspect_types) if t == 'o']
+        self.shape = [1]
+        for i in self.index:
+            self.shape.append(self.shape[-1]*dependency_tensor.shape[i])
+        self.buckets = [defaultdict(list) for _ in range(self.shape[-1])]
+        for node in dependency_tensor.state_nodes:
+            self.buckets[self.map(node)][tuple(node[1:])].append(node)
+
+    def map(self, node):
+        m = 0
+        for i, s in zip(self.index, self.shape[:-1]):
+            m += node[i] * s
+        return m
+
+    def __iter__(self):
+        return (b for b in self.buckets)
