@@ -9,6 +9,19 @@ def sample_partition(dependency_tensor, null_distribution,
                      updates=100,
                      initial_partition=None
                      ):
+    """
+    Sample partition for a multilayer network with specified interlayer dependencies
+
+    :param dependency_tensor: dependency tensor
+    :param null_distribution: null distribution (function that takes a state-node as input and returns a random mesoset
+                              assignment
+    :param updates: expected number of (pseudo-)Gibbs-sampling updates per state-node (has no effect for fully ordered
+                    dependency tensor. (optional, default=100)
+    :param initial_partition: mapping of state-nodes to initial meso-set assignment.
+                              (optional, default=sampled from null distribution)
+
+    :return: sampled partition as a mapping (dict) from state-nodes to meso-set assignments.
+    """
     if initial_partition is None:
         partition = {node: null_distribution(node) for node in dependency_tensor.state_nodes()}
     else:
@@ -34,15 +47,23 @@ def sample_partition(dependency_tensor, null_distribution,
 
 
 def dirichlet_null(layers, theta, n):
+    """
+    Samples meso-set assignment probabilities from a Dirichlet distribution and returns a categorical null-distribution
+    based on these probabilities.
+
+    :param layers: [a_1,...a_d] Number of layers for each aspect
+    :param theta: concentration parameter for the dirichlet distribution
+    :param n: number of meso-sets
+    :return: null distribution function: (state-node) -> random meso-set
+    """
     weights = dict()
     for layer in SubscriptIterator(layers):
         weights[layer] = list(accumulate(dirichlet(theta, n)))
+
     def null(node):
         return categorical(weights[node[1:]])
+
     return null
-
-
-
 
 
 

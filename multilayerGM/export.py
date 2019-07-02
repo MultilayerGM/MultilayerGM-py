@@ -2,6 +2,7 @@ import json
 from scipy.io import savemat
 import numpy as np
 
+
 def export_json_edgelist(multinet, file):
     with open(file, 'w') as f:
         json.dump(list(multinet.edges()), f)
