@@ -144,26 +144,3 @@ class SubscriptIterator:
             else:
                 self.state[index] = 0
                 self._update_state(index - 1)
-
-
-class OrderedAspectBuckets:
-    """
-    divide state nodes into buckets based on ordered aspects
-    """
-    def __init__(self, dependency_tensor):
-        self.index = [i+1 for i, t in enumerate(dependency_tensor.aspect_types) if t == 'o']
-        self.shape = [1]
-        for i in self.index:
-            self.shape.append(self.shape[-1]*dependency_tensor.shape[i])
-        self.buckets = [defaultdict(list) for _ in range(self.shape[-1])]
-        for node in dependency_tensor.state_nodes:
-            self.buckets[self.map(node)][tuple(node[1:])].append(node)
-
-    def map(self, node):
-        m = 0
-        for i, s in zip(self.index, self.shape[:-1]):
-            m += node[i] * s
-        return m
-
-    def __iter__(self):
-        return (b for b in self.buckets)
