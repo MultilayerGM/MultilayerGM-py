@@ -101,7 +101,9 @@ class MultiAspect(DependencyTensor):
         nodes = tensors[0].shape[0]
         for t in tensors:
             if t.shape[0] != nodes:
-                raise ValueError("All aspects need to have the same number of nodes")
+                raise ValueError("All tensors need to have the same number of nodes")
+            if len(t.shape) != 2:
+                raise ValueError("All tensors need to have exactly one aspect")
         shape =[nodes]
         shape += [t.shape[1] for t in tensors]
         super().__init__(tuple(shape), "".join(t.aspect_types for t in tensors))
