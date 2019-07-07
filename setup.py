@@ -10,5 +10,6 @@ setup(
     packages=find_packages(),
     install_requires=[
         'numpy',
+        'nxMultilayerNet @ git+https://github.com/LJeub/nxMultilayerNet.git'
     ],
 )
