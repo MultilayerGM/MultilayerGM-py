@@ -3,11 +3,26 @@ from collections import defaultdict as _dfdict
 import nxmultilayer as nxm
 
 
-
-
-
-
 def multilayer_DCSBM_network(partition, mu=0.1, k_min=5, k_max=70, t_k=-2):
+    """
+    Generate multilayer benchmark networks with planted community structure using a DCSBM model. The mixing parameter
+    `mu` determines the strength of the planted community structure. For `mu=0`, all edges are constrained to fall
+    within communities. For `mu>0`, a fraction `mu` of edges is sampled independently of the planted communities.
+    For `mu=1`, all edges are independent of the planted communities and the generated network has no community structure.
+
+    The expected degrees are sampled from a truncated powerlaw distribution.
+
+    The sampled multilayer network is returned as a MultilayerGraph which adds some functionality on top of a NetworkX
+    Graph (see https://github.com/LJeub/nxMultilayerNet )
+
+    :param partition: Partition to plant
+    :param mu: Fraction of random edges (default: 0.1)
+    :param k_min: Minimum cutoff for distribution of expected degrees
+    :param k_max: Maximum cutoff for distribution of expected degrees
+    :param t_k: Exponent for distribution of expected degrees
+
+    :return: generated multilayer network
+    """
     layer_partitions = _dfdict(dict)
     neighbors = _dfdict(set)
     if isinstance(partition, _np.ndarray):

@@ -1,9 +1,7 @@
 import random as _rand
 from itertools import accumulate, chain
-from .distributions import categorical
-from collections import defaultdict
-
 from abc import ABC, abstractmethod
+from .distributions import categorical
 
 
 class DependencyTensor(ABC):
@@ -101,7 +99,7 @@ class DependencyTensor(ABC):
         Return either a randomly sampled neighbour of the input state-node or the input state-node itself. This method
         is called to determine the updated meso-set assignment of a state-node. If the state-node returned by this
         method is not the same as the input state-node, the input state-node's meso-set assignment is updated by copying
-        the assignment of the output state-node. If the input and output state-nodes are the same, the input state-nodes
+        the assignment of the output state-node. If the input and output state-nodes are the same, the input state-node's
         assignment is updated by sampling from the null-distribution.
         :param node: input state-node
         :return: output state-node
@@ -118,16 +116,38 @@ class DependencyTensor(ABC):
 
 
 class UniformMultiplex(DependencyTensor):
-    def __init__(self, nodes, layers, p):
-        super().__init__((nodes, layers), 'r')
+    """
+    Implements a dependency tensor for generating multiplex networks with uniform interlayer dependencies.
+
+    This tensor is layer-coupled and has a single aspect.
+
+    """
+    def __init__(self, n_nodes, n_layers, p):
+        """
+        :param n_nodes: number of physical nodes
+        :param n_layers: number of layers
+        :param p: copying probability (probability that a state-node obtains a new mesoset assingment by copying the
+                  mesoset assignment of a different state-node during an update)
+        """
+        super().__init__((n_nodes, n_layers), 'r')
         self.p = p
 
     def getrandneighbour(self, node):
+        """
+        Return randomly sampled neighbour for the input state-node:
+        with probability `self.p`: sample the output state-node uniformly at random from all other state-nodes
+                                   representing the same physical node as the input
+        else: return the input state-node (it's mesoset assignment will be resampled from the null-distribution)
 
+        :param node: input state-node
+        :return: output state-node
+        """
         if _rand.random() > self.p:
-            # returning the same state node for resampling from null
+            # returning the same state node for resampling from null-distribution
             return node
         else:
+            # sample a state-node uniformly at random from all other state-nodes representing the same physical node
+            # as the input
             n = _rand.randrange(0, self.shape[1]-1)
             if n >= node[1]:
                 n += 1
@@ -135,15 +155,40 @@ class UniformMultiplex(DependencyTensor):
 
 
 class UniformTemporal(DependencyTensor):
-    def __init__(self, nodes, layers, p):
-        super().__init__((nodes, layers), 'o')
+    """
+    Implements a dependency tensor for generating temporal networks with uniform interlayer dependencies.
+
+    This tensor is layer-coupled and has a single aspect.
+
+    """
+    def __init__(self, n_nodes, n_layers, p):
+        """
+        :param n_nodes: number of physical nodes
+        :param n_layers: number of layers
+        :param p: copying probability (probability that a state-node obtains a new mesoset assingment by copying the
+                  mesoset assignment of a different state-node during an update)
+        """
+        super().__init__((n_nodes, n_layers), 'o')
         self.p = p
 
     def getrandneighbour(self, node):
+        """
+        Return randomly sampled neighbour for the input state-node:
+
+        If the input state-node is in layer 0, always return the input state-node (mesoset assignments for state-nodes in
+        layer 0 are always resampled from the null-distribution), otherwise
+        with probability `self.p`: return the state-node representing the same physical node as the input in the
+                                   previous layer
+        else: return the input state-node (it's mesoset assignment will be resampled from the null-distribution)
+
+        :param node: input state-node
+        :return: output state-node
+        """
         if node[1] == 0 or _rand.random() > self.p:
             # returning the same state node for resampling from null
             return node
         else:
+            # return corresponding state-node from previous layer
             return (node[0], node[1]-1)
 
 
@@ -153,7 +198,13 @@ class BlockMultiplex(DependencyTensor):
 
 
 class MultiAspect(DependencyTensor):
-    def __init__(self, tensors, alpha):
+    def __init__(self, tensors, weights):
+        """
+        Construct multi-aspect dependency tensor by combining multiple single-aspect dependency tensors.
+
+        :param tensors: list of single-aspect tensors
+        :param weights: list of weights: tensors[i] is used with probability weights[i]/sum(weights)
+        """
         nodes = tensors[0].shape[0]
         for t in tensors:
             if t.shape[0] != nodes:
@@ -163,14 +214,23 @@ class MultiAspect(DependencyTensor):
         shape =[nodes]
         shape += [t.shape[1] for t in tensors]
         super().__init__(tuple(shape), "".join(t.aspect_types for t in tensors))
-        self.calpha = list(accumulate(alpha))
+        self.calpha = list(accumulate(weights))
         a_sum = self.calpha[-1]
         if a_sum != 1:
             self.calpha[:] = [a/a_sum for a in self.calpha]
-        self.alpha = [a/a_sum for a in alpha]
+        self.alpha = [a / a_sum for a in weights]
         self.tensors = tensors
 
     def getrandneighbour(self, node):
+        """
+        An update for this tensor proceeds in two steps. First, we select an aspect such that the probability of
+        selecting a particular aspect is proportional to its weight. Second, we use the tensor corresponding to the
+        selected aspect to determine the output state-node. In particular, the output state-node differs from the input
+        state-node in at most the node index and the index corresponding to the selected aspect.
+
+        :param node: input state-node
+        :return: output state-node
+        """
         i = categorical(self.calpha)
         n, a_i = self.tensors[i].getrandneighbour((node[0], node[i+1]))
         node = list(node) # convert to list for index assignment
@@ -181,6 +241,11 @@ class MultiAspect(DependencyTensor):
 
 class SubscriptIterator:
     def __init__(self, shape):
+        """
+        Iterator over all subscripts of a multidimensional tensor of given shape in lexicographic order
+
+        :param shape: shape of tensor
+        """
         self.shape = shape
         self.state = [0 for _ in self.shape]
         if self.state:
