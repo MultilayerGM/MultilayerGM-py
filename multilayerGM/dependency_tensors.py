@@ -1,7 +1,10 @@
 import random as _rand
 from itertools import accumulate, chain
+from collections import Iterable
 from abc import ABC, abstractmethod
 from .distributions import categorical
+
+# TODO: Implement generic dependency tensors that allow one to specify copying probabilities explicitly
 
 
 class DependencyTensor(ABC):
@@ -18,7 +21,7 @@ class DependencyTensor(ABC):
 
         :param shape: [n, a_1, ..., a_d] specify number of nodes and number of layers for each aspect
         :param aspect_types: specify sampling type for each aspect ('o' for ordered or 'r' for random).
-                             `aspect_types` can be a string or list of strings such that aspect_types[i] specifies the
+                             `aspect_types` should be a string such that aspect_types[i] specifies the
                              type of the ith aspect. Note that `len(aspect_types) = len(shape)-1`.
         :param state_nodes: List of state-nodes (optional, defaults to all state nodes)
         """
@@ -184,14 +187,14 @@ class Temporal(DependencyTensor):
 
         If the input state-node is in layer 0, always return the input state-node (mesoset assignments for state-nodes in
         layer 0 are always resampled from the null-distribution), otherwise
-        with probability `self.p`: return the state-node representing the same physical node as the input in the
+        with probability `self.p[node[1]-1]`: return the state-node representing the same physical node as the input in the
                                    previous layer
         else: return the input state-node (it's mesoset assignment will be resampled from the null-distribution)
 
         :param node: input state-node
         :return: output state-node
         """
-        if node[1] == 0 or _rand.random() > self.p:
+        if node[1] == 0 or _rand.random() > self.p[node[1]-1]:
             # returning the same state node for resampling from null
             return node
         else:

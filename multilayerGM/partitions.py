@@ -46,19 +46,19 @@ def sample_partition(dependency_tensor, null_distribution,
     return partition
 
 
-def dirichlet_null(layers, theta, n):
+def dirichlet_null(layers, theta, n_sets):
     """
     Samples meso-set assignment probabilities from a Dirichlet distribution and returns a categorical null-distribution
     based on these probabilities.
 
     :param layers: [a_1,...a_d] Number of layers for each aspect
     :param theta: concentration parameter for the dirichlet distribution
-    :param n: number of meso-sets
+    :param n_sets: number of meso-sets
     :return: null distribution function: (state-node) -> random meso-set
     """
     weights = dict()
     for layer in SubscriptIterator(layers):
-        weights[layer] = list(accumulate(dirichlet(theta, n)))
+        weights[layer] = list(accumulate(dirichlet(theta, n_sets)))
 
     def null(node):
         return categorical(weights[node[1:]])

@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='multilayerGM',
-    description='Generate multilayer networks with mesoscale structure',
+    description='A Python framework for generating multilayer networks with planted mesoscale structure.',
     url='https://github.com/MultilayerGM/MultilayerGM-py',
     use_scm_version=True,
     setup_requires=['setuptools_scm'],

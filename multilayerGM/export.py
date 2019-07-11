@@ -5,14 +5,14 @@ import nxmultilayer as nxm
 from ast import literal_eval
 
 
-def save_json_edgelist(multinet, file):
+def save_json_edgelist(multinet, filename):
     """
     Export edgelist for multilayer network in JSON format
 
     :param multinet: Multilayer network in nxm.MultilayerGraph or nxm.MultilayerDiGraph format
-    :param file: filepath for output
+    :param filename: filepath for output
     """
-    with open(file, 'w') as f:
+    with open(filename, 'w') as f:
         json.dump(list(multinet.to_directed(as_view=True).edges()), f)
 
 
