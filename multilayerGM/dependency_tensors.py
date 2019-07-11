@@ -154,22 +154,29 @@ class UniformMultiplex(DependencyTensor):
             return (node[0], n)
 
 
-class UniformTemporal(DependencyTensor):
+class Temporal(DependencyTensor):
     """
-    Implements a dependency tensor for generating temporal networks with uniform interlayer dependencies.
+    Implements a dependency tensor for generating temporal networks where a layer only depends directly on the previous
+    layer.
 
-    This tensor is layer-coupled and has a single aspect.
+    This tensor is ordered, layer-coupled, and has a single aspect.
 
     """
     def __init__(self, n_nodes, n_layers, p):
         """
         :param n_nodes: number of physical nodes
         :param n_layers: number of layers
-        :param p: copying probability (probability that a state-node obtains a new mesoset assingment by copying the
-                  mesoset assignment of a different state-node during an update)
+        :param p: copying probabilities (probability that a state-node obtains a new mesoset assingment by copying the
+                  mesoset assignment of a different state-node during an update). This can either be a single probability
+                  (in which case the copying probability is the same for each layer) or a list of probabilities of length
+                  `n_layers-1` (in which case p[i-1] is the probability that a state node in layer i copies its mesoset
+                  assignment from the corresponding state node in layer i-1).
         """
         super().__init__((n_nodes, n_layers), 'o')
-        self.p = p
+        if isinstance(p, Iterable):
+            self.p = p
+        else:
+            self.p = [p] * (n_layers-1)
 
     def getrandneighbour(self, node):
         """
