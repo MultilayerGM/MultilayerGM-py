@@ -79,8 +79,8 @@ def save_matlab(multinet, file):
     :return:
     """
     multinet = multinet.to_directed(as_view=True)
-    source = np.row_stack(e[0] for e in multinet.edges()) + 1 # one-based indeces for MATLAB
-    target = np.row_stack(e[1] for e in multinet.edges()) + 1
+    source = np.row_stack([e[0] for e in multinet.edges()]) + 1 # one-based indeces for MATLAB
+    target = np.row_stack([e[1] for e in multinet.edges()]) + 1
 
     partition = np.ndarray(shape=tuple(len(a) for a in multinet.aspects), dtype=float)
     for node, p in multinet.nodes(data='mesoset'):
