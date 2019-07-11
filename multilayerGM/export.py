@@ -16,15 +16,15 @@ def save_json_edgelist(multinet, file):
         json.dump(list(multinet.to_directed(as_view=True).edges()), f)
 
 
-def save_json_partition(multinet, file):
+def save_json_partition(partition, filename):
     """
-    Export partition from multilayer network in JSON format (note that node keys are converted to string)
+    Export partition in JSON format (note that node keys are converted to string)
 
-    :param multinet: Multilayer network in nxm.MultilayerGraph or nxm.MultilayerDiGraph format
-    :param file: filepath for output
+    :param partition: map from state nodes to mesoset assignments
+    :param filename: filepath for output
     """
-    partition = {repr(node): p for node, p in multinet.nodes(data='mesoset')}
-    with open(file, 'w') as f:
+    partition = {repr(node): p for node, p in partition}
+    with open(filename, 'w') as f:
         json.dump(partition, f)
 
 
@@ -51,6 +51,18 @@ def load_json_multinet(edgelist, partition=None):
     else:
         mg = nxm.MultilayerDiGraph()
     return mg
+
+
+def load_JSON_partition(filename):
+    """
+    Load partition from JSON data
+    :param filename: path
+    :return: dict: Mapping from state nodes to mesosets
+    """
+    with open(filename) as f:
+        partition_data = json.load(f)
+    partition_data = {literal_eval(key): value for key, value in partition_data.items()}
+    return partition_data
 
 
 def save_matlab(multinet, file):
