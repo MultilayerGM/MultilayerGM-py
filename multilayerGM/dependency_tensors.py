@@ -125,28 +125,28 @@ class UniformMultiplex(DependencyTensor):
     This tensor is layer-coupled and has a single aspect.
 
     """
-    def __init__(self, n_nodes, n_layers, p):
+    def __init__(self, n_nodes, n_layers, p_hat):
         """
         :param n_nodes: number of physical nodes
         :param n_layers: number of layers
-        :param p: copying probability (probability that a state-node obtains a new mesoset assingment by copying the
+        :param p_hat: copying probability (probability that a state-node obtains a new mesoset assingment by copying the
                   mesoset assignment of a different state-node during an update)
         """
         super().__init__((n_nodes, n_layers), 'r')
-        self.p = p
+        self.p_hat = p_hat
 
     def getrandneighbour(self, node):
         """
         Return randomly sampled neighbour for the input state-node:
-        with probability `self.p`: sample the output state-node uniformly at random from all other state-nodes
+        with probability `self.p_hat`: sample the output state-node uniformly at random from all other state-nodes
                                    representing the same physical node as the input
         else: return the input state-node (it's mesoset assignment will be resampled from the null-distribution)
 
         :param node: input state-node
         :return: output state-node
         """
-        if _rand.random() > self.p:
             # returning the same state node for resampling from null-distribution
+        if _rand.random() > self.p_hat:
             return node
         else:
             # sample a state-node uniformly at random from all other state-nodes representing the same physical node
