@@ -3,13 +3,13 @@
 This code implements the method for generating multilayer networks with 
 planted mesoscale structure of
 
->M. Bazzi, L. G. S. Jeub, A. Arenas, S. D. Howison, and M. A. Porter. 
+>M. Bazzi, L. G. S. Jeub, A. Arenas, S. D. Howison, and M. A. Porter.
 Generative benchmark models for mesoscale structure in multilayer networks. 
 arXiv:1608.06196 [cs.SI], 2016.
 
 If you use results based on this code in an academic publication please cite 
 this paper and cite the code as
->L. G. S. Jeub. A Python framework for generating multilayer networks with planted 
+>L. G. S. Jeub. A Python framework for generating multilayer networks with planted
 mesoscale structure. <https://github.com/MultilayerGM/MultilayerGM-py>, 2019 
 
 
@@ -148,6 +148,46 @@ using
 ```python
 partition = dict(multinet.nodes(data='mesoset'))
 ```
+
+
+### Compare partitions
+
+This package includes functionality to compare (multilayer) partitions using normalized mutual information (NMI). The
+variant of NMI implemented here uses joint entropy as the normalisation, i.e.,
+`NMI(P1, P2) = I(P1, P2)/H(P1, P2)`, where `I` is the mutual information and `H` is the entropy.
+
+#### NMI
+
+To compare two partitions using NMI (this corresponds to computing multilayer NMI if the input partitions are
+multilayer) use
+```python
+nmi_val = gm.comparisons.nmi(partition1, partition2)
+```
+
+#### mean NMI
+
+To compare two multilayer partitions using mean NMI between induced partitions for each layer use
+```python
+nmi_val = gm.comparisons.mean_nmi(partition1, partition2)
+```
+
+#### NMI tensor
+
+To compute the NMI between induced partitions of a multilayer partition for all pairs of layers, use
+```python
+nmi_map = gm.comparisons.nmi_tensor(partition)
+```
+
+#### Induced partitions
+
+To extract induced paritions for each layer from a multilayer partition use
+```python
+lp = gm.comparisons.layer_partitions(partition)
+```
+
+This function is used by the other comparison methods internally but may be useful to implement custom
+comparisons, such as only comparing partitions on a subset of layers.
+
 
 ### Save results
 
