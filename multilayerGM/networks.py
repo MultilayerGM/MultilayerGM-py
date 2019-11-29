@@ -3,7 +3,7 @@ from collections import defaultdict as _dfdict
 import nxmultilayer as nxm
 
 
-def multilayer_DCSBM_network(partition, mu=0.1, k_min=5, k_max=70, t_k=-2):
+def multilayer_DCSBM_network(partition, mu=0.1, k_min=5, k_max=70, t_k=-2, degrees=None):
     """
     Generate multilayer benchmark networks with planted community structure using a DCSBM model. The mixing parameter
     `mu` determines the strength of the planted community structure. For `mu=0`, all edges are constrained to fall
@@ -20,6 +20,8 @@ def multilayer_DCSBM_network(partition, mu=0.1, k_min=5, k_max=70, t_k=-2):
     :param k_min: Minimum cutoff for distribution of expected degrees
     :param k_max: Maximum cutoff for distribution of expected degrees
     :param t_k: Exponent for distribution of expected degrees
+    :param degrees: (Optional) specify degree sequence as mapping of state-node -> degree (if specified, `k_min`,
+                    `k_max`, and `t_k` have no effect and the specified degrees are used instead)
 
     :return: generated multilayer network
     """
@@ -32,10 +34,15 @@ def multilayer_DCSBM_network(partition, mu=0.1, k_min=5, k_max=70, t_k=-2):
         for node, p in partition.items():
             layer_partitions[tuple(node[1:])][tuple(node)] = p
 
+    fixed_degrees = degrees
+
     for p in layer_partitions.values():
         n_nodes = len(p)
         nodes_l = list(p.keys())
-        degrees = power_law_sample(n_nodes, t=t_k, x_max=k_max, x_min=k_min)
+        if fixed_degrees is None:
+            degrees = power_law_sample(n_nodes, t=t_k, x_max=k_max, x_min=k_min)
+        else:
+            degrees = _np.array([fixed_degrees[node] for node in nodes_l])
         # random edges
         no_partition = _np.zeros(n_nodes, dtype=int)
         block_matrix = build_block_matrix(no_partition, degrees * mu)
