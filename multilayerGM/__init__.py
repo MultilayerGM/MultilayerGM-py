@@ -2,7 +2,7 @@ from . import dependency_tensors
 from . import export
 from . import comparisons
 from .networks import multilayer_DCSBM_network
-from .partitions import sample_partition, dirichlet_null
+from .partitions import sample_partition, DirichletNull, dirichlet_null
 from pkg_resources import get_distribution, DistributionNotFound
 
 

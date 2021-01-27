@@ -46,24 +46,36 @@ def sample_partition(dependency_tensor, null_distribution,
     return partition
 
 
+class DirichletNull:
+    def __init__(self, layers, theta, n_sets):
+        """
+        Samples meso-set assignment probabilities from a Dirichlet distribution and returns a categorical null-distribution
+        based on these probabilities.
+
+        :param layers: [a_1,...a_d] Number of layers for each aspect
+        :param theta: concentration parameter for the dirichlet distribution
+        :param n_sets: number of meso-sets
+        :return: null distribution function: (state-node) -> random meso-set
+        """
+        self.weights = dict()
+        for layer in SubscriptIterator(layers):
+            self.weights[layer] = list(accumulate(dirichlet(theta, n_sets)))
+
+    def __call__(self, node):
+        return categorical(self.weights[node[1:]])
+
+
 def dirichlet_null(layers, theta, n_sets):
     """
-    Samples meso-set assignment probabilities from a Dirichlet distribution and returns a categorical null-distribution
-    based on these probabilities.
+        Samples meso-set assignment probabilities from a Dirichlet distribution and returns a categorical null-distribution
+        based on these probabilities. (Function form provided for backwards compatibility. New code should use the class
+        version directly.)
 
-    :param layers: [a_1,...a_d] Number of layers for each aspect
-    :param theta: concentration parameter for the dirichlet distribution
-    :param n_sets: number of meso-sets
-    :return: null distribution function: (state-node) -> random meso-set
+        :param layers: [a_1,...a_d] Number of layers for each aspect
+        :param theta: concentration parameter for the dirichlet distribution
+        :param n_sets: number of meso-sets
+        :return: null distribution function: (state-node) -> random meso-set
     """
-    weights = dict()
-    for layer in SubscriptIterator(layers):
-        weights[layer] = list(accumulate(dirichlet(theta, n_sets)))
-
-    def null(node):
-        return categorical(weights[node[1:]])
-
-    return null
-
+    return DirichletNull(layers, theta, n_sets)
 
 
