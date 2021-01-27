@@ -55,10 +55,10 @@ assignment.
 Currently, the only implemented choice (which is the one we use for the numerical
 examples in the paper) for the null distribution independently samples the 
 mesoset distribution for each layer from a symmetric dirichlet distribution 
-with concentration parameter `theta` and number of mesosets `n_sets`. 
+with concentration parameter `theta` and number of mesosets `n_sets`.
 
 ```python
-null = gm.dirichlet_null(layers=dt.shape[1:], theta=theta, n_sets=n_sets)
+null = gm.DirichletNull(layers=dt.shape[1:], theta=theta, n_sets=n_sets)
 ```
 
 However, it is straight-forward to substitute different null distributions.
