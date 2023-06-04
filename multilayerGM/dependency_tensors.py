@@ -1,6 +1,6 @@
 import random as _rand
 from itertools import accumulate, chain
-from collections import Iterable
+from collections.abc import Iterable
 from abc import ABC, abstractmethod
 from .distributions import categorical
 
